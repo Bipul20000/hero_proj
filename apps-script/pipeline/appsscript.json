@@ -13,49 +13,70 @@
     "common": {
       "name": "AWPIS Pipeline"
     },
-    "workspace": {
-      "workflowActions": [
+    "flows": {
+      "workflowElements": [
         {
           "id": "awpis_step1_initialize",
-          "label": "AWPIS: Initialize Pipeline Run",
-          "onConfigFunction": "configStep1Initialize",
-          "onExecuteFunction": "wsInitializePipelineRun"
+          "state": "ACTIVE",
+          "name": "AWPIS: Initialize Pipeline Run",
+          "workflowAction": {
+            "onConfigFunction": "configStep1Initialize",
+            "onExecuteFunction": "wsInitializePipelineRun"
+          }
         },
         {
           "id": "awpis_step2_collect",
-          "label": "AWPIS: Collect Intelligence",
-          "onConfigFunction": "configStep2Collect",
-          "onExecuteFunction": "wsCollectIntelligence"
+          "state": "ACTIVE",
+          "name": "AWPIS: Collect Intelligence",
+          "workflowAction": {
+            "onConfigFunction": "configStep2Collect",
+            "onExecuteFunction": "wsCollectIntelligence"
+          }
         },
         {
           "id": "awpis_step4_fetch_code",
-          "label": "AWPIS: Fetch Target Code",
-          "onConfigFunction": "configStep4FetchCode",
-          "onExecuteFunction": "wsFetchTargetCode"
+          "state": "ACTIVE",
+          "name": "AWPIS: Fetch Target Code",
+          "workflowAction": {
+            "onConfigFunction": "configStep4FetchCode",
+            "onExecuteFunction": "wsFetchTargetCode"
+          }
         },
         {
           "id": "awpis_step6_quality_gates",
-          "label": "AWPIS: Run Quality Gates",
-          "onConfigFunction": "configStep6QualityGates",
-          "onExecuteFunction": "wsRunQualityGates"
+          "state": "ACTIVE",
+          "name": "AWPIS: Run Quality Gates",
+          "workflowAction": {
+            "onConfigFunction": "configStep6QualityGates",
+            "onExecuteFunction": "wsRunQualityGates"
+          }
         },
         {
           "id": "awpis_step7_sandbox",
-          "label": "AWPIS: Run Sandbox Validation",
-          "onConfigFunction": "configStep7Sandbox",
-          "onExecuteFunction": "wsRunSandboxValidation"
+          "state": "ACTIVE",
+          "name": "AWPIS: Run Sandbox Validation",
+          "workflowAction": {
+            "onConfigFunction": "configStep7Sandbox",
+            "onExecuteFunction": "wsRunSandboxValidation"
+          }
         },
         {
           "id": "awpis_step8_deploy",
-          "label": "AWPIS: Deploy to Production",
-          "onConfigFunction": "configStep8Deploy",
-          "onExecuteFunction": "wsDeployToProduction"
+          "state": "ACTIVE",
+          "name": "AWPIS: Deploy to Production",
+          "workflowAction": {
+            "onConfigFunction": "configStep8Deploy",
+            "onExecuteFunction": "wsDeployToProduction"
+          }
         },
         {
           "id": "awpis_step9_finalize",
-          "label": "AWPIS: Update Memory & Baseline",
-          "onConfigFunction": "configStep9Finalize",
-          "onExecuteFunction": "wsUpdateMemoryAndBaseline"
+          "state": "ACTIVE",
+          "name": "AWPIS: Update Memory & Baseline",
+          "workflowAction": {
+            "onConfigFunction": "configStep9Finalize",
+            "onExecuteFunction": "wsUpdateMemoryAndBaseline"
+          }
         }
       ]
     }
