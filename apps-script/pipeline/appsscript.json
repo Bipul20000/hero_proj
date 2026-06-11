@@ -11,7 +11,8 @@
   ],
   "addOns": {
     "common": {
-      "name": "AWPIS Pipeline"
+      "name": "AWPIS Pipeline",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/1x/apps_script_48dp.png"
     },
     "flows": {
       "workflowElements": [
