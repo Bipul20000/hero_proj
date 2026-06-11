@@ -12,15 +12,38 @@
   "addOns": {
     "common": {
       "name": "AWPIS Pipeline",
-      "logoUrl": "https://www.gstatic.com/images/branding/product/1x/apps_script_48dp.png"
+      "logoUrl": "https://www.gstatic.com/images/branding/product/2x/apps_script_48dp.png"
     },
     "flows": {
       "workflowElements": [
         {
           "id": "awpis_step1_initialize",
           "state": "ACTIVE",
-          "name": "AWPIS: Initialize Pipeline Run",
+          "name": "AWPIS: Initialize Pipeline",
+          "description": "Loads client config and generates a run ID.",
           "workflowAction": {
+            "inputs": [
+              {
+                "id": "client_id",
+                "description": "The client ID from the Config tab",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
+            "outputs": [
+              {
+                "id": "run_id",
+                "description": "Unique run identifier",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              },
+              {
+                "id": "client_id",
+                "description": "The client ID",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
             "onConfigFunction": "configStep1Initialize",
             "onExecuteFunction": "wsInitializePipelineRun"
           }
@@ -29,7 +52,24 @@
           "id": "awpis_step2_collect",
           "state": "ACTIVE",
           "name": "AWPIS: Collect Intelligence",
+          "description": "Gathers PSI, GitHub, and security data.",
           "workflowAction": {
+            "inputs": [
+              {
+                "id": "client_id",
+                "description": "The client ID",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
+            "outputs": [
+              {
+                "id": "intelligence_bundle",
+                "description": "JSON for Strategist Gem",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
             "onConfigFunction": "configStep2Collect",
             "onExecuteFunction": "wsCollectIntelligence"
           }
@@ -38,7 +78,24 @@
           "id": "awpis_step4_fetch_code",
           "state": "ACTIVE",
           "name": "AWPIS: Fetch Target Code",
+          "description": "Fetches targeted source files from GitHub.",
           "workflowAction": {
+            "inputs": [
+              {
+                "id": "fix_plan",
+                "description": "JSON from Strategist Gem",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
+            "outputs": [
+              {
+                "id": "code_context",
+                "description": "JSON for Engineer Gem",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
             "onConfigFunction": "configStep4FetchCode",
             "onExecuteFunction": "wsFetchTargetCode"
           }
@@ -47,7 +104,30 @@
           "id": "awpis_step6_quality_gates",
           "state": "ACTIVE",
           "name": "AWPIS: Run Quality Gates",
+          "description": "Runs 4 quality gates on the generated fix.",
           "workflowAction": {
+            "inputs": [
+              {
+                "id": "generated_fix",
+                "description": "JSON from Engineer Gem",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
+            "outputs": [
+              {
+                "id": "gate_results",
+                "description": "Gate results JSON",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              },
+              {
+                "id": "all_gates_passed",
+                "description": "TRUE if passed",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
             "onConfigFunction": "configStep6QualityGates",
             "onExecuteFunction": "wsRunQualityGates"
           }
@@ -56,7 +136,23 @@
           "id": "awpis_step7_sandbox",
           "state": "ACTIVE",
           "name": "AWPIS: Run Sandbox Validation",
+          "description": "Deploys preview and checks health.",
           "workflowAction": {
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "sandbox_result",
+                "description": "Sandbox result JSON",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              },
+              {
+                "id": "sandbox_passed",
+                "description": "TRUE if passed",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
             "onConfigFunction": "configStep7Sandbox",
             "onExecuteFunction": "wsRunSandboxValidation"
           }
@@ -65,7 +161,23 @@
           "id": "awpis_step8_deploy",
           "state": "ACTIVE",
           "name": "AWPIS: Deploy to Production",
+          "description": "Merges PR and checks for regressions.",
           "workflowAction": {
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "deploy_result",
+                "description": "Deploy result JSON",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              },
+              {
+                "id": "deploy_status",
+                "description": "Deployment status",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
             "onConfigFunction": "configStep8Deploy",
             "onExecuteFunction": "wsDeployToProduction"
           }
@@ -74,7 +186,23 @@
           "id": "awpis_step9_finalize",
           "state": "ACTIVE",
           "name": "AWPIS: Update Memory & Baseline",
+          "description": "Finalizes the run and emails the report.",
           "workflowAction": {
+            "inputs": [],
+            "outputs": [
+              {
+                "id": "pipeline_result",
+                "description": "Full result JSON",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              },
+              {
+                "id": "report_status",
+                "description": "SENT or FAILED",
+                "cardinality": "SINGLE",
+                "dataType": { "basicType": "STRING" }
+              }
+            ],
             "onConfigFunction": "configStep9Finalize",
             "onExecuteFunction": "wsUpdateMemoryAndBaseline"
           }
