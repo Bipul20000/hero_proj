@@ -1,0 +1,169 @@
+{
+  "timeZone": "Asia/Kolkata",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/script.scriptapp"
+  ],
+  "addOns": {
+    "common": {
+      "name": "AWPIS Pipeline",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/2x/apps_script_48dp.png"
+    },
+    "workspaceStudio": {
+      "steps": [
+        {
+          "id": "awpis_step1_initialize",
+          "name": "AWPIS: Initialize Pipeline Run",
+          "description": "Loads client config, generates run ID, clears state, and writes the initial RUNNING row to the Runs tab.",
+          "function": "wsInitializePipelineRun",
+          "inputParameters": [
+            {
+              "name": "client_id",
+              "type": "STRING",
+              "description": "The client ID from the Config tab (e.g. motoverse)"
+            }
+          ],
+          "outputParameters": [
+            {
+              "name": "run_id",
+              "type": "STRING",
+              "description": "Unique run identifier for this pipeline execution"
+            },
+            {
+              "name": "client_id",
+              "type": "STRING",
+              "description": "The client ID passed through for downstream steps"
+            }
+          ]
+        },
+        {
+          "id": "awpis_step2_collect",
+          "name": "AWPIS: Collect Intelligence",
+          "description": "Gathers PSI metrics, GitHub codebase data, run history, and security scan results into an IntelligenceBundle.",
+          "function": "wsCollectIntelligence",
+          "inputParameters": [
+            {
+              "name": "client_id",
+              "type": "STRING",
+              "description": "The client ID from Step 1"
+            }
+          ],
+          "outputParameters": [
+            {
+              "name": "intelligence_bundle",
+              "type": "STRING",
+              "description": "JSON string — the full IntelligenceBundle to pass to the Performance Strategist Gem"
+            }
+          ]
+        },
+        {
+          "id": "awpis_step4_fetch_code",
+          "name": "AWPIS: Fetch Target Code",
+          "description": "Receives the FixPlan from the Strategist Gem, fetches targeted source files from GitHub, and attaches SonarQube issues.",
+          "function": "wsFetchTargetCode",
+          "inputParameters": [
+            {
+              "name": "fix_plan",
+              "type": "STRING",
+              "description": "JSON string — the FixPlan output from the AWPIS Performance Strategist Gem"
+            }
+          ],
+          "outputParameters": [
+            {
+              "name": "code_context",
+              "type": "STRING",
+              "description": "JSON string — fix plan + source file contents + SonarQube issues for the Engineer Gem"
+            }
+          ]
+        },
+        {
+          "id": "awpis_step6_quality_gates",
+          "name": "AWPIS: Run Quality Gates",
+          "description": "Receives the generated fix from the Engineer Gem and runs all 4 quality gates: structural safety, SonarQube, code critic, and blast radius.",
+          "function": "wsRunQualityGates",
+          "inputParameters": [
+            {
+              "name": "generated_fix",
+              "type": "STRING",
+              "description": "JSON string — the generated code fix from the Frontend/Backend Engineer Gem"
+            }
+          ],
+          "outputParameters": [
+            {
+              "name": "gate_results",
+              "type": "STRING",
+              "description": "JSON string — pass/fail results for all 4 quality gates"
+            },
+            {
+              "name": "all_gates_passed",
+              "type": "STRING",
+              "description": "TRUE if all gates passed, FALSE otherwise"
+            }
+          ]
+        },
+        {
+          "id": "awpis_step7_sandbox",
+          "name": "AWPIS: Run Sandbox Validation",
+          "description": "Triggers a Vercel preview deployment, runs PSI on the preview URL, checks backend health, and evaluates against baseline.",
+          "function": "wsRunSandboxValidation",
+          "inputParameters": [],
+          "outputParameters": [
+            {
+              "name": "sandbox_result",
+              "type": "STRING",
+              "description": "JSON string — sandbox validation results including preview PSI scores"
+            },
+            {
+              "name": "sandbox_passed",
+              "type": "STRING",
+              "description": "TRUE if sandbox validation passed, FALSE otherwise"
+            }
+          ]
+        },
+        {
+          "id": "awpis_step8_deploy",
+          "name": "AWPIS: Deploy to Production",
+          "description": "Opens a GitHub PR, merges it (AUTOMATED mode), triggers Vercel production deploy, waits, runs post-deploy PSI, and checks for regressions.",
+          "function": "wsDeployToProduction",
+          "inputParameters": [],
+          "outputParameters": [
+            {
+              "name": "deploy_result",
+              "type": "STRING",
+              "description": "JSON string — deployment results including PR URL, regression status, and production PSI scores"
+            },
+            {
+              "name": "deploy_status",
+              "type": "STRING",
+              "description": "SUCCESS, REVERTED, BLOCKED, or FAILED"
+            }
+          ]
+        },
+        {
+          "id": "awpis_step9_finalize",
+          "name": "AWPIS: Update Memory & Baseline",
+          "description": "Writes fix memory, updates baseline scores if improved, finalizes the Runs tab, builds the PipelineResult, and emails the report.",
+          "function": "wsUpdateMemoryAndBaseline",
+          "inputParameters": [],
+          "outputParameters": [
+            {
+              "name": "pipeline_result",
+              "type": "STRING",
+              "description": "JSON string — the complete PipelineResult for the Report Writer Gem"
+            },
+            {
+              "name": "report_status",
+              "type": "STRING",
+              "description": "SENT or SKIPPED"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

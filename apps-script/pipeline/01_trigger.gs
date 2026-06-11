@@ -437,3 +437,104 @@ function _sendErrorAlert(client, error) {
     Logger.log('Failed to send error alert email: ' + mailErr.message);
   }
 }
+// ------------------------------------------------------------
+// Menu + Dry Run + Last Report
+// ------------------------------------------------------------
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('AWPIS')
+    .addItem('Run Pipeline Now', 'runPipelineManual')
+    .addItem('Run Dry Run', 'runPipelineDryRun')
+    .addItem('View Last Report', 'showLastReport')
+    .addToUi();
+}
+
+/**
+ * runPipelineDryRun()
+ * Same as runPipelineManual, but forces DRY_RUN=true so no
+ * production deployment occurs. Useful for testing the pipeline
+ * end-to-end without touching production.
+ */
+function runPipelineDryRun() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ss.toast('AWPIS DRY RUN starting...', 'AWPIS', 5);
+
+  var clients = _getActiveClients();
+  if (clients.length === 0) {
+    ss.toast('No active clients found in Config tab.', 'AWPIS Error', 10);
+    return;
+  }
+
+  var client = clients[0];
+  ss.toast('Dry run for: ' + client.client_name, 'AWPIS', 5);
+
+  // Temporarily force dry_run mode
+  var originalMode = PropertiesService.getScriptProperties().getProperty('RUN_MODE');
+  PropertiesService.getScriptProperties().setProperty('RUN_MODE', 'dry_run');
+
+  try {
+    runPipelineForClient(client.client_id);
+    ss.toast('Dry run complete for ' + client.client_name, 'AWPIS Done', 10);
+  } catch (e) {
+    ss.toast('Dry run ERROR: ' + e.message, 'AWPIS Error', 15);
+    Logger.log('Dry run ERROR: ' + e.message);
+  } finally {
+    // Restore original mode
+    if (originalMode) {
+      PropertiesService.getScriptProperties().setProperty('RUN_MODE', originalMode);
+    }
+  }
+}
+
+/**
+ * showLastReport()
+ * Reads the most recent PipelineResult from the State tab
+ * and shows it in a dialog. If no result, shows last run status.
+ */
+function showLastReport() {
+  var ui = SpreadsheetApp.getUi();
+  var pipelineResult = getState('pipeline_result');
+
+  if (!pipelineResult) {
+    ui.alert('AWPIS', 'No pipeline result found. Run the pipeline first.', ui.ButtonSet.OK);
+    return;
+  }
+
+  var pr = (typeof pipelineResult === 'string') ? JSON.parse(pipelineResult) : pipelineResult;
+  var pb = pr.psi_before || {};
+  var pa = pr.psi_after  || {};
+
+  var report = [
+    'AWPIS Pipeline Report',
+    '─────────────────────',
+    '',
+    'Status:   ' + (pr.status || 'UNKNOWN'),
+    'Client:   ' + (pr.client_name || ''),
+    'Run ID:   ' + (pr.run_id || ''),
+    'Duration: ' + Math.round((pr.duration_ms || 0) / 1000) + 's',
+    '',
+    '── Scores ──',
+    'Performance:    ' + (pb.performance || '--') + ' → ' + (pa.performance || '--'),
+    'Accessibility:  ' + (pb.accessibility || '--') + ' → ' + (pa.accessibility || '--'),
+    'Best Practices: ' + (pb.best_practices || '--') + ' → ' + (pa.best_practices || '--'),
+    'SEO:            ' + (pb.seo || '--') + ' → ' + (pa.seo || '--'),
+    '',
+    '── Fix ──',
+    'Focus:    ' + ((pr.fix_plan || {}).focus || 'N/A'),
+    'Approach: ' + ((pr.fix_plan || {}).approach || 'N/A'),
+    'Files:    ' + (pr.files_changed || []).join(', '),
+    '',
+    '── Gates ──',
+    'Structural:   ' + ((pr.gates || {}).structural || 'N/A'),
+    'SonarQube:    ' + ((pr.gates || {}).sonarqube || 'N/A'),
+    'Critic:       ' + ((pr.gates || {}).critic || 'N/A'),
+    'Blast Radius: ' + ((pr.gates || {}).blast_radius || 'N/A'),
+    '',
+    '── Deploy ──',
+    'Deployed: ' + ((pr.deploy || {}).deployed || false),
+    'Reverted: ' + ((pr.deploy || {}).reverted || false),
+    'PR:       ' + ((pr.deploy || {}).pr_url || 'N/A')
+  ].join('\n');
+
+  ui.alert('AWPIS — Last Report', report, ui.ButtonSet.OK);
+}
