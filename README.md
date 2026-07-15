@@ -1,4 +1,4 @@
-# AWPIS — Autonomous Web Performance Intelligence System
+# AWPIS: Autonomous Web Performance Intelligence System
 
 AWPIS is an autonomous, AI-driven daily pipeline that monitors website performance, generates code fixes using Google Gems (Gemini), validates changes through multi-stage quality gates, and deploys improvements to production — entirely without human intervention.
 
